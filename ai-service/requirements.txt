@@ -1,0 +1,19 @@
+# 智学奇境 AI 服务依赖包
+
+# Web框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 日志系统
+loguru==0.7.2
+
+# 数据处理 (为后续AI功能准备)
+pydantic==2.5.0
+requests==2.31.0
+
+# AI/ML (后续使用)
+# torch==2.1.0
+# torchvision==0.16.0
+# scikit-learn==1.3.2
+# pandas==2.1.4
+# numpy==1.25.2
