@@ -31,12 +31,12 @@ function tail_logs() {
     
     case $service in
         "backend")
-            echo "🔍 实时监控后端日志..."
-            tail -f $LOG_DIR/zhixue.log
+            echo "🔍 实时监控后端日志 (backend.log)..."
+            tail -f $LOG_DIR/backend.log
             ;;
         "ai")
-            echo "🔍 实时监控AI服务日志..."
-            tail -f $LOG_DIR/ai_service.log
+            echo "🔍 实时监控AI服务日志 (ai.log)..."
+            tail -f $LOG_DIR/ai.log
             ;;
         "all")
             echo "🔍 实时监控所有日志..."
@@ -56,11 +56,11 @@ function view_logs() {
     case $service in
         "backend")
             echo "📋 查看后端日志 (最近 $lines 行)..."
-            tail -n $lines $LOG_DIR/zhixue.log
+            tail -n $lines $LOG_DIR/backend.log
             ;;
         "ai")
             echo "📋 查看AI服务日志 (最近 $lines 行)..."
-            tail -n $lines $LOG_DIR/ai_service.log
+            tail -n $lines $LOG_DIR/ai.log
             ;;
         "all")
             echo "📋 查看所有日志 (最近 $lines 行)..."
@@ -95,59 +95,67 @@ function analyze_logs() {
     
     # 检查错误数量
     echo "🚨 错误统计:"
-    if [ -f "$LOG_DIR/zhixue.log" ]; then
-        echo "  后端错误: $(grep -c 'ERROR' $LOG_DIR/zhixue.log || echo 0)"
+    if [ -f "$LOG_DIR/backend.log" ]; then
+        echo "  后端错误: $(grep -c -i 'ERROR' $LOG_DIR/backend.log || echo 0)"
     fi
-    
-    if [ -f "$LOG_DIR/ai_service.log" ]; then
-        echo "  AI服务错误: $(grep -c 'ERROR' $LOG_DIR/ai_service.log || echo 0)"
+    if [ -f "$LOG_DIR/ai.log" ]; then
+        echo "  AI服务错误: $(grep -c -i 'ERROR' $LOG_DIR/ai.log || echo 0)"
     fi
-    
-    echo ""
-    
-    # 请求统计
-    echo "📈 请求统计 (今日):"
-    today=$(date +%Y-%m-%d)
-    
-    if [ -f "$LOG_DIR/zhixue.log" ]; then
-        backend_requests=$(grep "$today" $LOG_DIR/zhixue.log | grep -c "请求处理" || echo 0)
-        echo "  后端API请求: $backend_requests"
-    fi
-    
-    if [ -f "$LOG_DIR/ai_service.log" ]; then
-        ai_requests=$(grep "$today" $LOG_DIR/ai_service.log | grep -c "AI请求" || echo 0)
-        echo "  AI服务请求: $ai_requests"
-    fi
-    
-    echo ""
-    
-    # 日志文件大小
-    echo "📁 日志文件大小:"
-    ls -lh $LOG_DIR/*.log 2>/dev/null | awk '{print "  " $9 ": " $5}'
 }
 
-# 主程序
-case $1 in
-    "tail")
-        service=${2:-"all"}
-        tail_logs $service
+# --- Main script logic ---
+
+if [ $# -eq 0 ]; then
+    show_help
+    exit 1
+fi
+
+COMMAND=$1
+shift
+
+# Default values
+SERVICE="all"
+LINES=100
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        -s|--service)
+        SERVICE="$2"
+        shift 2
         ;;
-    "view")
-        service=${2:-"all"}
-        lines=${3:-100}
-        view_logs $service $lines
+        -n|--lines)
+        LINES="$2"
+        shift 2
         ;;
-    "clean")
+        *)
+        echo "错误: 未知选项 $1"
+        show_help
+        exit 1
+        ;;
+    esac
+done
+
+# Execute command
+case $COMMAND in
+    tail)
+        tail_logs "$SERVICE"
+        ;;
+    view)
+        view_logs "$SERVICE" "$LINES"
+        ;;
+    clean)
         clean_logs
         ;;
-    "analyze")
+    analyze)
         analyze_logs
         ;;
-    "help"|"")
+    help|--help|-h)
         show_help
         ;;
     *)
-        echo "❌ 未知命令: $1"
-        echo "使用 '$0 help' 查看帮助"
+        echo "❌ 未知命令: $COMMAND"
+        show_help
         ;;
 esac
