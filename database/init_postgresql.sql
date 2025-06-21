@@ -29,6 +29,7 @@ CREATE TYPE config_type AS ENUM ('string', 'integer', 'decimal', 'boolean', 'jso
 CREATE TYPE user_role AS ENUM ('user', 'admin');
 CREATE TYPE task_type AS ENUM ('daily', 'weekly', 'achievement');
 CREATE TYPE task_status AS ENUM ('pending', 'completed', 'claimed');
+CREATE TYPE reward_type AS ENUM ('points', 'item', 'badge');
 
 -- ============================================
 -- 1. 用户系统表
@@ -240,7 +241,7 @@ CREATE TABLE rewards (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
-    reward_type VARCHAR(30) DEFAULT 'points', -- points/item/badge
+    reward_type reward_type DEFAULT 'points',
     value INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

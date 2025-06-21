@@ -9,17 +9,16 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"time"
-
-	"gorm.io/gorm"
 )
 
-// JSONB 自定义类型，用于PostgreSQL JSONB字段
+// JSONB类型
+// 用于PostgreSQL JSONB字段
+// 用法：gorm:"type:jsonb"
 type JSONB map[string]interface{}
 
 func (j JSONB) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
-
 func (j *JSONB) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
 	if !ok {
@@ -28,215 +27,186 @@ func (j *JSONB) Scan(value interface{}) error {
 	return json.Unmarshal(bytes, j)
 }
 
-// User 用户基础信息模型
+// ================= 用户系统 =================
 type User struct {
-	ID           uint64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	Username     string     `json:"username" gorm:"uniqueIndex;size:50;not null"`
-	Email        string     `json:"email" gorm:"uniqueIndex;size:100;not null"`
-	PasswordHash string     `json:"-" gorm:"size:255;not null"` // 不返回密码
-	Nickname     string     `json:"nickname" gorm:"size:50"`
-	AvatarURL    string     `json:"avatar_url" gorm:"size:500"`
-	Grade        int        `json:"grade" gorm:"default:6"`               // 年级 1-12
-	Role         string     `json:"role" gorm:"size:20;default:student"`  // student/teacher/admin
-	Status       string     `json:"status" gorm:"size:20;default:active"` // active/inactive/banned
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	LastLoginAt  *time.Time `json:"last_login_at"`
-
-	// 关联关系
-	Profile      *UserProfile      `json:"profile,omitempty"`
-	Analytics    []UserAnalytics   `json:"analytics,omitempty"`
-	Achievements []UserAchievement `json:"achievements,omitempty"`
+	ID           int64  `gorm:"primaryKey;autoIncrement"`
+	Username     string `gorm:"size:50;uniqueIndex;not null"`
+	Email        string `gorm:"size:100;uniqueIndex;not null"`
+	PasswordHash string `gorm:"size:255;not null"`
+	Nickname     string `gorm:"size:50;not null"`
+	AvatarURL    string `gorm:"size:255;default:''"`
+	GradeLevel   int    `gorm:"default:1"`
+	BirthDate    *time.Time
+	Gender       string    `gorm:"type:user_gender;default:'other'"`
+	Status       string    `gorm:"type:user_status;default:'active'"`
+	Role         string    `gorm:"type:user_role;default:'user'"`
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+	LastLoginAt  *time.Time
+	Profiles     []UserProfile `gorm:"foreignKey:UserID"`
 }
 
-// UserProfile 用户详细信息模型
 type UserProfile struct {
-	UserID       uint64    `json:"user_id" gorm:"primaryKey"`
-	RealName     string    `json:"real_name" gorm:"size:50"`
-	Phone        string    `json:"phone" gorm:"size:20"`
-	School       string    `json:"school" gorm:"size:100"`
-	ClassName    string    `json:"class_name" gorm:"size:50"`
-	ParentPhone  string    `json:"parent_phone" gorm:"size:20"`
-	LearningGoal string    `json:"learning_goal" gorm:"type:text"`
-	Timezone     string    `json:"timezone" gorm:"size:50;default:Asia/Shanghai"`
-	Language     string    `json:"language" gorm:"size:10;default:zh-CN"`
-	Preferences  JSONB     `json:"preferences" gorm:"type:jsonb"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-
-	// 外键关联
-	User User `json:"user" gorm:"foreignKey:UserID"`
+	ID                  int64     `gorm:"primaryKey;autoIncrement"`
+	UserID              int64     `gorm:"not null;uniqueIndex"`
+	CurrentDifficulty   float64   `gorm:"type:decimal(3,2);default:1.0"`
+	TotalStudyTime      int       `gorm:"default:0"`
+	TotalQuestions      int       `gorm:"default:0"`
+	CorrectAnswers      int       `gorm:"default:0"`
+	StreakDays          int       `gorm:"default:0"`
+	MaxStreakDays       int       `gorm:"default:0"`
+	LevelScore          int       `gorm:"default:0"`
+	UserLevel           int       `gorm:"default:1"`
+	LearningStyle       string    `gorm:"type:learning_style;default:'mixed'"`
+	PreferredDifficulty float64   `gorm:"type:decimal(3,2);default:2.5"`
+	CreatedAt           time.Time `gorm:"autoCreateTime"`
+	UpdatedAt           time.Time `gorm:"autoUpdateTime"`
 }
 
-// KnowledgePoint 知识点模型
+type UserGradeHistory struct {
+	ID         int64     `gorm:"primaryKey;autoIncrement"`
+	UserID     int64     `gorm:"not null;index"`
+	GradeLevel int       `gorm:"not null"`
+	StartDate  time.Time `gorm:"not null"`
+	EndDate    *time.Time
+	CreatedAt  time.Time `gorm:"autoCreateTime"`
+}
+
+// ================= 数学题库系统 =================
 type KnowledgePoint struct {
-	ID              uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name            string    `json:"name" gorm:"size:100;not null"`
-	Description     string    `json:"description" gorm:"type:text"`
-	Grade           int       `json:"grade" gorm:"not null;index:idx_grade_subject"`
-	Subject         string    `json:"subject" gorm:"size:50;default:math;index:idx_grade_subject"`
-	ParentID        *uint64   `json:"parent_id" gorm:"index"`
-	DifficultyLevel int       `json:"difficulty_level" gorm:"default:1;index"`
-	OrderIndex      int       `json:"order_index" gorm:"default:0"`
-	Status          string    `json:"status" gorm:"size:20;default:active"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-
-	// 关联关系
-	Parent    *KnowledgePoint  `json:"parent,omitempty" gorm:"foreignKey:ParentID"`
-	Children  []KnowledgePoint `json:"children,omitempty" gorm:"foreignKey:ParentID"`
-	Questions []Question       `json:"questions,omitempty"`
+	ID              int64     `gorm:"primaryKey;autoIncrement"`
+	Name            string    `gorm:"size:100;not null"`
+	Code            string    `gorm:"size:20;uniqueIndex;not null"`
+	ParentID        *int64    `gorm:"index"`
+	GradeLevel      int       `gorm:"not null"`
+	DifficultyRange string    `gorm:"size:10;default:'1.0-5.0'"`
+	Description     string    `gorm:"type:text"`
+	IsActive        bool      `gorm:"default:true"`
+	SortOrder       int       `gorm:"default:0"`
+	CreatedAt       time.Time `gorm:"autoCreateTime"`
+	UpdatedAt       time.Time `gorm:"autoUpdateTime"`
 }
 
-// Question 题目模型
 type Question struct {
-	ID               uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	Title            string    `json:"title" gorm:"size:500;not null"`
-	Content          string    `json:"content" gorm:"type:text;not null"`
-	QuestionType     string    `json:"question_type" gorm:"size:50;not null;index:idx_type_status"`
-	Difficulty       float64   `json:"difficulty" gorm:"type:decimal(3,2);default:1.0;index"`
-	KnowledgePointID uint64    `json:"knowledge_point_id" gorm:"index"`
-	Options          JSONB     `json:"options" gorm:"type:jsonb"`
-	CorrectAnswer    JSONB     `json:"correct_answer" gorm:"type:jsonb;not null"`
-	Explanation      string    `json:"explanation" gorm:"type:text"`
-	Hints            JSONB     `json:"hints" gorm:"type:jsonb"`
-	Tags             []string  `json:"tags" gorm:"type:text[]"`
-	EstimatedTime    int       `json:"estimated_time" gorm:"default:60"` // 秒
-	AuthorID         uint64    `json:"author_id"`
-	Status           string    `json:"status" gorm:"size:20;default:active;index:idx_type_status"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-
-	// 关联关系
-	KnowledgePoint KnowledgePoint `json:"knowledge_point" gorm:"foreignKey:KnowledgePointID"`
-	Author         User           `json:"author" gorm:"foreignKey:AuthorID"`
+	ID              int64   `gorm:"primaryKey;autoIncrement"`
+	Title           string  `gorm:"size:200;not null"`
+	Content         string  `gorm:"type:text;not null"`
+	QuestionType    string  `gorm:"type:question_type;default:'single_choice'"`
+	Difficulty      float64 `gorm:"type:decimal(3,2);not null"`
+	GradeLevel      int     `gorm:"not null"`
+	EstimatedTime   int     `gorm:"default:60"`
+	CorrectAnswer   string  `gorm:"type:text;not null"`
+	AnswerAnalysis  string  `gorm:"type:text"`
+	Hints           JSONB   `gorm:"type:jsonb"`
+	Choices         JSONB   `gorm:"type:jsonb"`
+	Tags            JSONB   `gorm:"type:jsonb"`
+	Source          string  `gorm:"size:100;default:''"`
+	AuthorID        *int64
+	ReviewStatus    string    `gorm:"type:review_status;default:'draft'"`
+	UsageCount      int       `gorm:"default:0"`
+	CorrectRate     float64   `gorm:"type:decimal(5,2);default:0.00"`
+	AvgResponseTime int       `gorm:"default:0"`
+	IsActive        bool      `gorm:"default:true"`
+	CreatedAt       time.Time `gorm:"autoCreateTime"`
+	UpdatedAt       time.Time `gorm:"autoUpdateTime"`
 }
 
-// UserAnswerRecord 用户答题记录模型
-type UserAnswerRecord struct {
-	ID               uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserID           uint64    `json:"user_id" gorm:"not null;index:idx_user_time"`
-	QuestionID       uint64    `json:"question_id" gorm:"not null;index"`
-	SessionID        string    `json:"session_id" gorm:"size:100;index"`
-	UserAnswer       JSONB     `json:"user_answer" gorm:"type:jsonb"`
-	IsCorrect        bool      `json:"is_correct" gorm:"not null;index:idx_correct_time"`
-	ResponseTime     int       `json:"response_time"` // 秒
-	AttemptCount     int       `json:"attempt_count" gorm:"default:1"`
-	HintUsed         bool      `json:"hint_used" gorm:"default:false"`
-	DifficultyAtTime float64   `json:"difficulty_at_time" gorm:"type:decimal(3,2)"`
-	AIConfidence     float64   `json:"ai_confidence" gorm:"type:decimal(4,3)"`
-	CreatedAt        time.Time `json:"created_at" gorm:"index:idx_user_time,idx_correct_time"`
-
-	// 关联关系
-	User     User     `json:"user" gorm:"foreignKey:UserID"`
-	Question Question `json:"question" gorm:"foreignKey:QuestionID"`
+type QuestionKnowledgePoint struct {
+	QuestionID       int64 `gorm:"primaryKey"`
+	KnowledgePointID int64 `gorm:"primaryKey"`
 }
 
-// LearningSession 学习会话模型
+// ================= 学习行为记录表 =================
+type AnswerRecord struct {
+	ID               int64     `gorm:"primaryKey;autoIncrement:false"`
+	UserID           int64     `gorm:"not null;index"`
+	QuestionID       int64     `gorm:"not null;index"`
+	SessionID        string    `gorm:"size:64"`
+	UserAnswer       string    `gorm:"type:text;not null"`
+	IsCorrect        bool      `gorm:"not null"`
+	ResponseTime     int       `gorm:"not null"`
+	HintUsedCount    int       `gorm:"default:0"`
+	DifficultyAtTime float64   `gorm:"type:decimal(3,2);not null"`
+	ConfidenceScore  *float64  `gorm:"type:decimal(3,2)"`
+	AnswerMethod     string    `gorm:"type:answer_method;default:'direct'"`
+	IPAddress        string    `gorm:"type:inet"`
+	DeviceInfo       JSONB     `gorm:"type:jsonb"`
+	CreatedAt        time.Time `gorm:"primaryKey;autoCreateTime"`
+}
+
 type LearningSession struct {
-	ID               string     `json:"id" gorm:"primaryKey;size:100"` // UUID
-	UserID           uint64     `json:"user_id" gorm:"not null;index:idx_user_time"`
-	SessionType      string     `json:"session_type" gorm:"size:50;default:practice"`
-	KnowledgePointID *uint64    `json:"knowledge_point_id"`
-	StartTime        time.Time  `json:"start_time" gorm:"default:CURRENT_TIMESTAMP;index:idx_user_time"`
-	EndTime          *time.Time `json:"end_time"`
-	TotalQuestions   int        `json:"total_questions" gorm:"default:0"`
-	CorrectQuestions int        `json:"correct_questions" gorm:"default:0"`
-	TotalTime        int        `json:"total_time"` // 秒
-	AvgResponseTime  float64    `json:"avg_response_time" gorm:"type:decimal(6,2)"`
-	DifficultyStart  float64    `json:"difficulty_start" gorm:"type:decimal(3,2)"`
-	DifficultyEnd    float64    `json:"difficulty_end" gorm:"type:decimal(3,2)"`
-	AIAdjustments    int        `json:"ai_adjustments" gorm:"default:0"`
-	Status           string     `json:"status" gorm:"size:20;default:active;index"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
-
-	// 关联关系
-	User           User               `json:"user" gorm:"foreignKey:UserID"`
-	KnowledgePoint *KnowledgePoint    `json:"knowledge_point,omitempty" gorm:"foreignKey:KnowledgePointID"`
-	AnswerRecords  []UserAnswerRecord `json:"answer_records,omitempty" gorm:"foreignKey:SessionID;references:ID"`
+	ID               int64     `gorm:"primaryKey;autoIncrement"`
+	SessionID        string    `gorm:"size:64;uniqueIndex;not null"`
+	UserID           int64     `gorm:"not null;index"`
+	StartTime        time.Time `gorm:"not null"`
+	EndTime          *time.Time
+	QuestionsCount   int       `gorm:"default:0"`
+	CorrectCount     int       `gorm:"default:0"`
+	AvgDifficulty    float64   `gorm:"type:decimal(3,2);default:0.00"`
+	SessionType      string    `gorm:"type:session_type;default:'practice'"`
+	CompletionStatus string    `gorm:"type:completion_status;default:'ongoing'"`
+	CreatedAt        time.Time `gorm:"autoCreateTime"`
+	UpdatedAt        time.Time `gorm:"autoUpdateTime"`
 }
 
-// UserAnalytics 用户学习分析模型
-type UserAnalytics struct {
-	ID                   uint64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserID               uint64     `json:"user_id" gorm:"not null;uniqueIndex:idx_user_knowledge"`
-	KnowledgePointID     *uint64    `json:"knowledge_point_id" gorm:"uniqueIndex:idx_user_knowledge"`
-	MasteryLevel         float64    `json:"mastery_level" gorm:"type:decimal(4,3);default:0.0;index"`
-	DifficultyPreference float64    `json:"difficulty_preference" gorm:"type:decimal(3,2);default:2.5"`
-	LearningSpeed        float64    `json:"learning_speed" gorm:"type:decimal(4,2)"` // 题/分钟
-	AccuracyRate         float64    `json:"accuracy_rate" gorm:"type:decimal(4,3)"`
-	TotalPracticeTime    int        `json:"total_practice_time" gorm:"default:0"` // 秒
-	LastPracticeAt       *time.Time `json:"last_practice_at"`
-	StrengthScore        float64    `json:"strength_score" gorm:"type:decimal(4,3)"`
-	WeaknessScore        float64    `json:"weakness_score" gorm:"type:decimal(4,3)"`
-	AIRecommendation     JSONB      `json:"ai_recommendation" gorm:"type:jsonb"`
-	UpdatedAt            time.Time  `json:"updated_at"`
-
-	// 关联关系
-	User           User            `json:"user" gorm:"foreignKey:UserID"`
-	KnowledgePoint *KnowledgePoint `json:"knowledge_point,omitempty" gorm:"foreignKey:KnowledgePointID"`
+// ================= AI系统相关表 =================
+type DifficultyAdjustment struct {
+	ID                int64     `gorm:"primaryKey;autoIncrement"`
+	UserID            int64     `gorm:"not null;index"`
+	OldDifficulty     float64   `gorm:"type:decimal(3,2);not null"`
+	NewDifficulty     float64   `gorm:"type:decimal(3,2);not null"`
+	AdjustmentReason  string    `gorm:"type:text;not null"`
+	Confidence        float64   `gorm:"type:decimal(3,2);not null"`
+	TriggerEvent      string    `gorm:"type:trigger_event;not null"`
+	PerformanceWindow JSONB     `gorm:"type:jsonb"`
+	CreatedAt         time.Time `gorm:"autoCreateTime"`
 }
 
-// UserAchievement 用户成就模型
-type UserAchievement struct {
-	ID              uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserID          uint64    `json:"user_id" gorm:"not null;index"`
-	AchievementType string    `json:"achievement_type" gorm:"size:50;not null;index"`
-	AchievementName string    `json:"achievement_name" gorm:"size:100;not null"`
-	Description     string    `json:"description" gorm:"type:text"`
-	Points          int       `json:"points" gorm:"default:0"`
-	BadgeIcon       string    `json:"badge_icon" gorm:"size:200"`
-	UnlockedAt      time.Time `json:"unlocked_at" gorm:"default:CURRENT_TIMESTAMP"`
-	Level           int       `json:"level" gorm:"default:1"`
-
-	// 关联关系
-	User User `json:"user" gorm:"foreignKey:UserID"`
+// ================= 系统配置表 =================
+type SystemConfig struct {
+	ID          int64     `gorm:"primaryKey;autoIncrement"`
+	ConfigKey   string    `gorm:"size:100;uniqueIndex;not null"`
+	ConfigValue string    `gorm:"type:text;not null"`
+	ConfigType  string    `gorm:"type:config_type;default:'string'"`
+	Description string    `gorm:"type:text"`
+	IsActive    bool      `gorm:"default:true"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
 
-// GameRoom 游戏房间模型
-type GameRoom struct {
-	ID               string     `json:"id" gorm:"primaryKey;size:100"` // UUID
-	RoomName         string     `json:"room_name" gorm:"size:100"`
-	RoomType         string     `json:"room_type" gorm:"size:50;default:practice"`
-	MaxPlayers       int        `json:"max_players" gorm:"default:4"`
-	CurrentPlayers   int        `json:"current_players" gorm:"default:0"`
-	KnowledgePointID *uint64    `json:"knowledge_point_id" gorm:"index"`
-	DifficultyLevel  float64    `json:"difficulty_level" gorm:"type:decimal(3,2);default:2.5"`
-	Status           string     `json:"status" gorm:"size:20;default:waiting;index"`
-	CreatedBy        uint64     `json:"created_by"`
-	CreatedAt        time.Time  `json:"created_at"`
-	StartedAt        *time.Time `json:"started_at"`
-	EndedAt          *time.Time `json:"ended_at"`
-
-	// 关联关系
-	KnowledgePoint *KnowledgePoint `json:"knowledge_point,omitempty" gorm:"foreignKey:KnowledgePointID"`
-	Creator        User            `json:"creator" gorm:"foreignKey:CreatedBy"`
+// ================= 游戏化任务与奖励系统表 =================
+type Reward struct {
+	ID          int64     `gorm:"primaryKey;autoIncrement"`
+	Name        string    `gorm:"size:100;not null"`
+	Description string    `gorm:"type:text"`
+	RewardType  string    `gorm:"type:reward_type;default:'points'"`
+	Value       int       `gorm:"default:0"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
 }
 
-// TableName 方法用于指定表名
-func (User) TableName() string             { return "users" }
-func (UserProfile) TableName() string      { return "user_profiles" }
-func (KnowledgePoint) TableName() string   { return "knowledge_points" }
-func (Question) TableName() string         { return "questions" }
-func (UserAnswerRecord) TableName() string { return "user_answer_records" }
-func (LearningSession) TableName() string  { return "learning_sessions" }
-func (UserAnalytics) TableName() string    { return "user_learning_analytics" }
-func (UserAchievement) TableName() string  { return "user_achievements" }
-func (GameRoom) TableName() string         { return "game_rooms" }
-
-// 模型验证方法
-func (u *User) BeforeCreate(tx *gorm.DB) error {
-	if u.CreatedAt.IsZero() {
-		u.CreatedAt = time.Now()
-	}
-	if u.UpdatedAt.IsZero() {
-		u.UpdatedAt = time.Now()
-	}
-	return nil
+type Task struct {
+	ID          int64  `gorm:"primaryKey;autoIncrement"`
+	Name        string `gorm:"size:100;not null"`
+	Description string `gorm:"type:text"`
+	Type        string `gorm:"type:task_type;default:'daily'"`
+	RewardID    *int64
+	IsActive    bool      `gorm:"default:true"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
 }
 
-func (u *User) BeforeUpdate(tx *gorm.DB) error {
-	u.UpdatedAt = time.Now()
-	return nil
+type UserTask struct {
+	ID          int64  `gorm:"primaryKey;autoIncrement"`
+	UserID      int64  `gorm:"not null;index"`
+	TaskID      int64  `gorm:"not null;index"`
+	Status      string `gorm:"type:task_status;default:'pending'"`
+	Progress    int    `gorm:"default:0"`
+	CompletedAt *time.Time
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+}
+
+type UserReward struct {
+	ID         int64     `gorm:"primaryKey;autoIncrement"`
+	UserID     int64     `gorm:"not null;index"`
+	RewardID   int64     `gorm:"not null;index"`
+	ObtainedAt time.Time `gorm:"autoCreateTime"`
 }
