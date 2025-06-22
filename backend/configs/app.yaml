@@ -43,6 +43,14 @@ game_server:
   websocket: true
   max_connections: 1000
 
+gateway_server:
+  port: 8000
+  upstreams:
+    - name: "auth_service"
+      url: "http://localhost:8001"
+    - name: "game_service"
+      url: "http://localhost:8002"
+
 logging:
   level: "info" # debug, info, warn, error
   file_path: "./logs/zhixue.log"

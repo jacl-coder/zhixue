@@ -116,7 +116,7 @@
     "msg": "OK",
     "data": {
       "token": "xxxxx.yyyyy.zzzzz",
-      "refresh_token": null,
+      "refreshToken": null,
       "user": { "id": 1, "name": "张三" }
     }
   }
@@ -138,7 +138,7 @@
     "id": 123,
     "title": "解方程：x² - 4 = 0",
     "difficulty": "中等",
-    "knowledge_point": "一元二次方程"
+    "knowledgePoint": "一元二次方程"
   }
 }
 ```
@@ -174,9 +174,9 @@
   "data": {
     "items": [ ... ],        // 当前页数据列表
     "page": 1,               // 当前页码
-    "page_size": 20,         // 每页条数
-    "total_items": 100,      // 总条数
-    "total_pages": 5         // 总页数
+    "pageSize": 20,         // 每页条数
+    "totalItems": 100,      // 总条数
+    "totalPages": 5         // 总页数
   }
 }
 ```
