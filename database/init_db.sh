@@ -209,6 +209,7 @@ function clean_database() {
     print_warning "这将删除所有数据库数据，确定要继续吗?"
     read -p "输入 'yes' 确认删除: " confirm
     if [ "$confirm" = "yes" ]; then
+        psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();"
         psql -U postgres -c "DROP DATABASE IF EXISTS $DB_NAME;"
         psql -U postgres -c "DROP USER IF EXISTS $DB_USER;"
         print_status "数据库清理完成"
