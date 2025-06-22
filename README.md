@@ -9,7 +9,7 @@
 ### 💻 技术栈
 
 - **客户端**: Unity (C#)
-- **后端服务**: Golang (Gin + Nano，ORM：GORM，后期可平滑迁移SQLC/pgx)
+- **后端服务**: Golang (Gin + Nano，ORM：GORM，后期可平滑迁移Ent/SQLC/pgx)
 - **AI推理**: Python (PyTorch + FastAPI)
 - **数据存储**: PostgreSQL + Redis
 

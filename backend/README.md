@@ -10,7 +10,8 @@
 │   ├── api/               # API层
 │   │   ├── handlers/      # HTTP处理器
 │   │   ├── routes/        # 路由定义
-│   │   └── middleware/    # 中间件
+│   │   ├── middleware/    # 中间件
+│   │   └── proto/         # gRPC Protobuf定义
 │   ├── service/           # 业务逻辑层
 │   │   ├── user/          # 用户服务
 │   │   ├── question/      # 题库服务
