@@ -26,7 +26,7 @@ CREATE TYPE completion_status AS ENUM ('ongoing', 'completed', 'interrupted');
 CREATE TYPE model_type AS ENUM ('difficulty_adjustment', 'recommendation', 'performance_prediction');
 CREATE TYPE trigger_event AS ENUM ('answer_correct', 'answer_wrong', 'time_based', 'manual');
 CREATE TYPE config_type AS ENUM ('string', 'integer', 'decimal', 'boolean', 'json');
-CREATE TYPE user_role AS ENUM ('user', 'admin');
+CREATE TYPE user_role AS ENUM ('user', 'admin', 'teacher');
 CREATE TYPE task_type AS ENUM ('daily', 'weekly', 'achievement');
 CREATE TYPE task_status AS ENUM ('pending', 'completed', 'claimed');
 CREATE TYPE reward_type AS ENUM ('points', 'item', 'badge');
