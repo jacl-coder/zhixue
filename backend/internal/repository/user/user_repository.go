@@ -16,6 +16,8 @@ type Repository interface {
 	Create(user *models.User) error
 	GetByUsername(username string) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
+	FindByID(id int64) (*models.User, error)
+	Update(user *models.User) error
 }
 
 // userRepository 实现了Repository接口
@@ -51,4 +53,19 @@ func (r *userRepository) GetByEmail(email string) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// FindByID 通过ID获取用户
+func (r *userRepository) FindByID(id int64) (*models.User, error) {
+	var user models.User
+	err := r.db.First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// Update 更新数据库中的用户信息
+func (r *userRepository) Update(user *models.User) error {
+	return r.db.Save(user).Error
 }

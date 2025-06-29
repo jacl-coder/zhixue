@@ -24,7 +24,6 @@ func NewReverseProxy(targetURL string) (gin.HandlerFunc, error) {
 	proxy.Director = func(req *http.Request) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
-		req.URL.Path = req.URL.Path
 		req.Host = target.Host
 	}
 

@@ -99,6 +99,13 @@ function stop_ai() {
 function stop_gateway() {
     print_info "停止API网关..."
     stop_by_pid "API网关" "/root/zhixue/logs/gateway.pid"
+
+    # 备用方案：通过端口停止
+    PID=$(lsof -ti:8080 2>/dev/null)
+    if [ ! -z "$PID" ]; then
+        kill -9 $PID 2>/dev/null
+        print_status "端口 8080 进程已强制停止 (PID: $PID)"
+    fi
 }
 
 function stop_all() {

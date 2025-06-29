@@ -112,6 +112,9 @@ func main() {
 	{
 		userRoutes.POST("/register", userHandler.Register)
 		userRoutes.POST("/login", userHandler.Login)
+		userRoutes.POST("/logout", userHandler.Logout)
+		userRoutes.GET("/me", userHandler.GetMe)
+		userRoutes.PUT("/me", userHandler.UpdateMe)
 	}
 
 	// 启动服务器

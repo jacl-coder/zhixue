@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"zhixue-backend/internal/config"
 	"zhixue-backend/internal/gateway"
+	"zhixue-backend/internal/redis"
 	"zhixue-backend/logger"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,12 @@ func main() {
 	if err != nil {
 		logger.Logger.Fatal("网关配置加载失败", zap.Error(err))
 	}
+
+	// 初始化Redis (登出黑名单功能需要)
+	if err := redis.InitRedis(&cfg.Redis); err != nil {
+		logger.Logger.Fatal("网关Redis初始化失败", zap.Error(err))
+	}
+	defer redis.CloseRedis()
 
 	logger.Logger.Info("🚀 启动智学奇境API网关",
 		zap.String("version", cfg.App.Version),

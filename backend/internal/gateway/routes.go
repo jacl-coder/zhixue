@@ -43,16 +43,17 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 	})
 
 	// V1 API 路由组
+	// AuthMiddleware 将智能地跳过白名单中的 /register 和 /login 路由
 	apiV1 := r.Group("/api/v1")
-	// apiV1.Use(AuthMiddleware(&cfg.Auth)) // 开发阶段暂时禁用认证
+	apiV1.Use(AuthMiddleware(&cfg.Auth))
 	{
-		// 默认将所有v1的请求转发到后端API服务
+		// 将所有 /api/v1/* 的请求都代理到后端API服务
 		apiV1.Any("/*path", backendAPIProxy)
 	}
 
-	// AI 服务路由组
+	// AI 服务路由组 (所有AI路由都需要认证)
 	ai := r.Group("/ai")
-	// ai.Use(AuthMiddleware(&cfg.Auth)) // 开发阶段暂时禁用认证
+	ai.Use(AuthMiddleware(&cfg.Auth))
 	{
 		// 将所有/ai的请求转发到AI服务
 		ai.Any("/*path", aiServiceProxy)
