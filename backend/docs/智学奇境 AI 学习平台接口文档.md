@@ -22,15 +22,16 @@
 * `303 See Other`：请求已完成，请客户端对 `Location` 指定的 URI 发起 GET 请求获取资源。
 * `304 Not Modified`：资源未修改，客户端可继续使用缓存副本。
 * `307 Temporary Redirect`：临时重定向，客户端应按原请求方法对新 URI 发起请求。
-* `400 Bad Request`：请求语法错误或参数无效。
-* `401 Unauthorized`：请求未提供有效身份验证信息。
-* `403 Forbidden`：请求有效，但拒绝执行（权限不足）。
-* `404 Not Found`：请求的资源不存在。
+* `400 Bad Request`：请求语法错误或参数无效（如参数校验失败，code: 40001）。
+* `401 Unauthorized`：请求未提供有效身份验证信息（如未登录或Token无效，code: 401）。
+* `403 Forbidden`：请求有效，但拒绝执行（权限不足，code: 403）。
+* `404 Not Found`：请求的资源不存在（如用户/题目不存在，code: 404）。
 * `405 Method Not Allowed`：请求方法不被允许。
 * `406 Not Acceptable`：请求的响应内容类型不被支持。
 * `412 Precondition Failed`：请求中指定的条件未满足。
 * `415 Unsupported Media Type`：请求的 `Content-Type` 不被支持。
-* `500 Internal Server Error`：服务器内部错误。
+* `409 Conflict`：资源冲突（如用户名已存在 code: 40901，邮箱已存在 code: 40902）。
+* `500 Internal Server Error`：服务器内部错误（code: 500）。
 * `501 Not Implemented`：服务器不支持请求方法或功能。
 
 ---

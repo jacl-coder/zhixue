@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"zhixue-backend/internal/api/response"
 	"zhixue-backend/internal/config"
 	"zhixue-backend/internal/redis"
 	"zhixue-backend/logger"
@@ -46,13 +47,15 @@ func AuthMiddleware(cfg *config.AuthConfig) gin.HandlerFunc {
 
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "缺少Authorization请求头"})
+			response.Error(c, http.StatusUnauthorized, "缺少Authorization请求头")
+			c.Abort()
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization请求头格式不正确"})
+			response.Error(c, http.StatusUnauthorized, "Authorization请求头格式不正确")
+			c.Abort()
 			return
 		}
 
@@ -67,14 +70,16 @@ func AuthMiddleware(cfg *config.AuthConfig) gin.HandlerFunc {
 
 		if err != nil {
 			logger.Logger.Warn("JWT验证失败", zap.Error(err))
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "无效的Token"})
+			response.Error(c, http.StatusUnauthorized, "无效的Token")
+			c.Abort()
 			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			jti, okJti := claims["jti"].(string)
 			if !okJti {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token格式不正确(缺少jti)"})
+				response.Error(c, http.StatusUnauthorized, "Token格式不正确(缺少jti)")
+				c.Abort()
 				return
 			}
 
@@ -82,7 +87,8 @@ func AuthMiddleware(cfg *config.AuthConfig) gin.HandlerFunc {
 			blacklistKey := "jwt_blacklist:" + jti
 			val, err := redis.Client.Get(context.Background(), blacklistKey).Result()
 			if err == nil && val == "true" {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token已失效(登出)"})
+				response.Error(c, http.StatusUnauthorized, "Token已失效(登出)")
+				c.Abort()
 				return
 			}
 
@@ -91,7 +97,8 @@ func AuthMiddleware(cfg *config.AuthConfig) gin.HandlerFunc {
 			userRole, ok2 := claims["user_role"].(string)
 
 			if !ok1 || !ok2 {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token中缺少必要信息"})
+				response.Error(c, http.StatusUnauthorized, "Token中缺少必要信息")
+				c.Abort()
 				return
 			}
 
@@ -104,7 +111,9 @@ func AuthMiddleware(cfg *config.AuthConfig) gin.HandlerFunc {
 
 			c.Next()
 		} else {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "无效的Token Claims"})
+			response.Error(c, http.StatusUnauthorized, "无效的Token Claims")
+			c.Abort()
 		}
 	}
 }
+

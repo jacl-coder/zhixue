@@ -38,22 +38,25 @@
 ## 4xx 客户端错误
 
 ### 400 Bad Request
-请求语法错误或参数无效。
+请求语法错误或参数无效（如参数校验失败，code: 40001）。
 
 ### 401 Unauthorized
-请求未提供有效身份验证信息。响应应包含 `WWW-Authenticate` 头。
+请求未提供有效身份验证信息（如未登录或Token无效，code: 401）。响应应包含 `WWW-Authenticate` 头。
 
 ### 403 Forbidden
-请求有效，但拒绝执行（权限不足）。
+请求有效，但拒绝执行（权限不足，code: 403）。
 
 ### 404 Not Found
-请求的资源不存在。
+请求的资源不存在（如用户/题目不存在，code: 404）。
 
 ### 405 Method Not Allowed
 请求方法不被允许。应返回 `Allow` 头指明允许的方法。
 
 ### 406 Not Acceptable
 请求的响应内容类型不被支持（如客户端只接受 `application/xml`，而服务只返回 `application/json`）。
+
+### 409 Conflict
+资源冲突（如用户名已存在 code: 40901，邮箱已存在 code: 40902）。
 
 ### 412 Precondition Failed
 请求中指定的条件未满足。
@@ -64,7 +67,7 @@
 ## 5xx 服务器错误
 
 ### 500 Internal Server Error
-服务器遇到意外错误，无法完成请求。
+服务器遇到意外错误，无法完成请求（code: 500）。
 
 ### 501 Not Implemented
 服务器不支持请求方法或功能。

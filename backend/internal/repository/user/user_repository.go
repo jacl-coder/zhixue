@@ -6,9 +6,17 @@ Description: 用户数据访问层
 package user
 
 import (
+	"errors"
 	"zhixue-backend/models"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
+)
+
+var (
+	ErrUsernameExists = errors.New("username already exists")
+	ErrEmailExists    = errors.New("email already exists")
+	ErrDuplicateEntry = errors.New("duplicate entry")
 )
 
 // Repository 定义用户数据仓库的接口
@@ -30,9 +38,44 @@ func NewUserRepository(db *gorm.DB) Repository {
 	return &userRepository{db: db}
 }
 
-// Create 在数据库中创建一个新用户
+// Create 在数据库中创建一个新用户，并处理唯一键冲突
 func (r *userRepository) Create(user *models.User) error {
-	return r.db.Create(user).Error
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. 创建用户
+		if err := tx.Create(user).Error; err != nil {
+			return err // 返回以便事务回滚
+		}
+
+		// 2. 创建关联的用户档案
+		userProfile := models.UserProfile{
+			UserID: user.ID,
+			// 可以设置其他默认值
+		}
+		if err := tx.Create(&userProfile).Error; err != nil {
+			return err // 返回以便事务回滚
+		}
+
+		// 事务成功提交
+		return nil
+	})
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			// PostgreSQL unique_violation error code
+			if pgErr.Code == "23505" {
+				switch pgErr.ColumnName {
+				case "username":
+					return ErrUsernameExists
+				case "email":
+					return ErrEmailExists
+				default:
+					return ErrDuplicateEntry
+				}
+			}
+		}
+	}
+	return err
 }
 
 // GetByUsername 通过用户名获取用户

@@ -45,22 +45,10 @@ func NewUserService(repo user.Repository, config *config.Config) Service {
 
 // Register 处理用户注册逻辑
 func (s *userService) Register(username, password, email, nickname string) (*dto.RegisterResponse, error) {
-	// 检查用户名是否存在
-	_, err := s.repo.GetByUsername(username)
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.New("用户名已存在")
-	}
-
-	// 检查邮箱是否存在
-	_, err = s.repo.GetByEmail(email)
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.New("邮箱已被注册")
-	}
-
 	// 哈希密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	// 创建用户模型
@@ -72,10 +60,15 @@ func (s *userService) Register(username, password, email, nickname string) (*dto
 		Role:         "user", // 默认角色
 	}
 
-	// 保存到数据库
+	// 直接尝试创建用户，由仓库层处理唯一键冲突和事务
 	err = s.repo.Create(newUser)
 	if err != nil {
-		return nil, err
+		// 如果错误是已知的唯一键冲突，直接返回以便handler层处理
+		if errors.Is(err, user.ErrUsernameExists) || errors.Is(err, user.ErrEmailExists) || errors.Is(err, user.ErrDuplicateEntry) {
+			return nil, err
+		}
+		// 对于其他未知错误，包装后返回
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return &dto.RegisterResponse{
