@@ -44,7 +44,7 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 
 	// V1 API 路由组
 	apiV1 := r.Group("/api/v1")
-	apiV1.Use(AuthMiddleware(&cfg.Auth))
+	// apiV1.Use(AuthMiddleware(&cfg.Auth)) // 开发阶段暂时禁用认证
 	{
 		// 默认将所有v1的请求转发到后端API服务
 		apiV1.Any("/*path", backendAPIProxy)
@@ -52,7 +52,7 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 
 	// AI 服务路由组
 	ai := r.Group("/ai")
-	ai.Use(AuthMiddleware(&cfg.Auth))
+	// ai.Use(AuthMiddleware(&cfg.Auth)) // 开发阶段暂时禁用认证
 	{
 		// 将所有/ai的请求转发到AI服务
 		ai.Any("/*path", aiServiceProxy)

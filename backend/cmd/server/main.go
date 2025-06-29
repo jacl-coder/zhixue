@@ -13,6 +13,11 @@ import (
 	"zhixue-backend/internal/redis"
 	"zhixue-backend/logger"
 
+	// 依赖注入
+	"zhixue-backend/internal/api/handlers"
+	user_repo "zhixue-backend/internal/repository/user"
+	user_service "zhixue-backend/internal/service/user"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -95,6 +100,18 @@ func main() {
 			})
 			c.JSON(200, gin.H{"message": "智学奇境后端服务运行正常"})
 		})
+	}
+
+	// 实例化Repository, Service, Handler
+	userRepository := user_repo.NewUserRepository(database.DB)
+	userService := user_service.NewUserService(userRepository, cfg)
+	userHandler := handlers.NewUserHandler(userService)
+
+	// 注册用户系统路由
+	userRoutes := api.Group("/users")
+	{
+		userRoutes.POST("/register", userHandler.Register)
+		userRoutes.POST("/login", userHandler.Login)
 	}
 
 	// 启动服务器
