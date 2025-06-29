@@ -23,6 +23,7 @@ type Config struct {
 	AIService  AIServiceConfig  `mapstructure:"ai_service"`
 	GameServer GameServerConfig `mapstructure:"game_server"`
 	Logging    LoggingConfig    `mapstructure:"logging"`
+	Gateway    GatewayConfig    `mapstructure:"gateway"`
 }
 
 // AppConfig 应用配置
@@ -82,6 +83,11 @@ type GameServerConfig struct {
 	Port           int  `mapstructure:"port"`
 	WebSocket      bool `mapstructure:"websocket"`
 	MaxConnections int  `mapstructure:"max_connections"`
+}
+
+// GatewayConfig 网关配置
+type GatewayConfig struct {
+	Port int `mapstructure:"port"`
 }
 
 // LoggingConfig 日志配置

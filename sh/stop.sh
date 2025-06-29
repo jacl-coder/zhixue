@@ -27,6 +27,7 @@ function print_usage() {
     echo "  backend  停止后端API服务"
     echo "  game     停止游戏服务器"
     echo "  ai       停止AI服务"
+    echo "  gateway  停止API网关"
     echo ""
     echo "示例:"
     echo "  $0          # 停止所有服务"
@@ -34,6 +35,7 @@ function print_usage() {
     echo "  $0 backend  # 仅停止后端服务"
     echo "  $0 game     # 仅停止游戏服务器"
     echo "  $0 ai       # 仅停止AI服务"
+    echo "  $0 gateway  # 仅停止API网关"
 }
 
 function stop_by_pid() {
@@ -94,12 +96,26 @@ function stop_ai() {
     fi
 }
 
+function stop_gateway() {
+    print_info "停止API网关..."
+    stop_by_pid "API网关" "/root/zhixue/logs/gateway.pid"
+}
+
+function stop_all() {
+    print_info "正在停止所有服务..."
+    stop_gateway
+    stop_backend
+    stop_game
+    stop_ai
+    print_status "所有服务已停止"
+}
+
 # 解析命令行参数
 SERVICE=${1:-all}
 
 # 验证参数
 case $SERVICE in
-    all|backend|game|ai)
+    all|backend|game|ai|gateway)
         ;;
     -h|--help)
         print_usage
@@ -118,36 +134,21 @@ echo "🛑 停止智学奇境服务 [$SERVICE]..."
 # 根据参数停止对应的服务
 case $SERVICE in
     all)
-        echo ""
-        stop_backend
-        echo ""
-        stop_game
-        echo ""
-        stop_ai
-        
-        echo ""
-        print_status "🎉 所有服务已停止！"
-        print_info "使用 './start.sh' 重新启动服务"
+        stop_all
         ;;
     backend)
-        echo ""
         stop_backend
-        echo ""
-        print_status "🎉 后端服务已停止！"
-        print_info "使用 './start.sh backend' 重新启动后端服务"
         ;;
     game)
-        echo ""
         stop_game
-        echo ""
-        print_status "🎉 游戏服务器已停止！"
-        print_info "使用 './start.sh game' 重新启动游戏服务器"
         ;;
     ai)
-        echo ""
         stop_ai
-        echo ""
-        print_status "🎉 AI服务已停止！"
-        print_info "使用 './start.sh ai' 重新启动AI服务"
+        ;;
+    gateway)
+        stop_gateway
         ;;
 esac
+
+echo ""
+print_status "服务停止操作完成"

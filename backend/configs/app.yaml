@@ -34,7 +34,7 @@ auth:
   refresh_expires: "168h" # 7 days
 
 ai_service:
-  url: "http://localhost:8001"
+  url: "http://localhost:8003"
   timeout: "30s"
   retry_count: 3
 
@@ -50,3 +50,6 @@ logging:
   max_backups: 30
   max_age: 7 # days
   compress: true
+
+gateway:
+  port: 8080

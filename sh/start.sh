@@ -27,6 +27,7 @@ function print_usage() {
     echo "  backend  启动后端API服务"
     echo "  game     启动游戏服务器"
     echo "  ai       启动AI服务"
+    echo "  gateway  启动API网关"
     echo ""
     echo "示例:"
     echo "  $0          # 启动所有服务"
@@ -34,6 +35,7 @@ function print_usage() {
     echo "  $0 backend  # 仅启动后端服务"
     echo "  $0 game     # 仅启动游戏服务器"
     echo "  $0 ai       # 仅启动AI服务"
+    echo "  $0 gateway  # 仅启动API网关"
 }
 
 function check_service() {
@@ -94,6 +96,28 @@ function start_backend() {
     fi
 }
 
+function start_gateway() {
+    print_info "启动API网关..."
+    
+    if ! check_if_running "API网关" "/root/zhixue/logs/gateway.pid"; then
+        return 1
+    fi
+    
+    cd /root/zhixue/backend
+    nohup go run cmd/gateway/main.go > ../logs/gateway.log 2>&1 &
+    GATEWAY_PID=$!
+    echo $GATEWAY_PID > ../logs/gateway.pid
+    
+    # 检查服务启动状态
+    check_service "API网关" "http://localhost:8080/health"
+    
+    if [ $? -eq 0 ]; then
+        echo "  API网关:    http://localhost:8080 (PID: $GATEWAY_PID)"
+        echo "  健康检查:   curl http://localhost:8080/health"
+        echo "  查看日志:   tail -f logs/gateway.log"
+    fi
+}
+
 function start_game() {
     print_info "启动游戏服务器..."
     
@@ -140,7 +164,7 @@ SERVICE=${1:-all}
 
 # 验证参数
 case $SERVICE in
-    all|backend|game|ai)
+    all|backend|game|ai|gateway)
         ;;
     -h|--help)
         print_usage
@@ -163,6 +187,8 @@ mkdir -p /root/zhixue/logs
 case $SERVICE in
     all)
         echo ""
+        start_gateway
+        echo ""
         start_backend
         echo ""
         start_game
@@ -172,8 +198,8 @@ case $SERVICE in
         print_status "🎉 智学奇境所有服务启动完成！"
         echo ""
         echo "🔗 快速健康检查命令:"
-        echo "  curl http://localhost:8001/health && curl http://localhost:8003/health"
-        echo "  netstat -tlnp | grep -E '(8001|8003|8002)'"
+        echo "  curl http://localhost:8080/health && curl http://localhost:8001/health && curl http://localhost:8003/health"
+        echo "  netstat -tlnp | grep -E '(8080|8001|8003|8002)'"
         ;;
     backend)
         echo ""
@@ -192,6 +218,12 @@ case $SERVICE in
         start_ai
         echo ""
         print_status "🎉 AI服务启动完成！"
+        ;;
+    gateway)
+        echo ""
+        start_gateway
+        echo ""
+        print_status "🎉 API网关启动完成！"
         ;;
 esac
 
