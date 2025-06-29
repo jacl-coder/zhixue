@@ -96,6 +96,13 @@ func (s *userService) Login(username, password string) (string, *dto.UserRespons
 		return "", nil, errors.New("用户不存在或密码错误")
 	}
 
+	// 更新登录时间
+	now := time.Now()
+	user.LastLoginAt = &now
+	if s.repo.Update(user) != nil {
+		return "", nil, errors.New("更新登录时间失败")
+	}
+
 	// 生成JWT
 	jti := uuid.New().String()
 	claims := jwt.MapClaims{
@@ -113,16 +120,17 @@ func (s *userService) Login(username, password string) (string, *dto.UserRespons
 	}
 
 	userResponse := &dto.UserResponse{
-		ID:         user.ID,
-		Username:   user.Username,
-		Email:      user.Email,
-		Nickname:   user.Nickname,
-		AvatarURL:  user.AvatarURL,
-		GradeLevel: user.GradeLevel,
-		BirthDate:  user.BirthDate,
-		Gender:     user.Gender,
-		Role:       user.Role,
-		CreatedAt:  user.CreatedAt,
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Nickname:    user.Nickname,
+		AvatarURL:   user.AvatarURL,
+		GradeLevel:  user.GradeLevel,
+		BirthDate:   user.BirthDate,
+		Gender:      user.Gender,
+		Role:        user.Role,
+		CreatedAt:   user.CreatedAt,
+		LastLoginAt: user.LastLoginAt, 
 	}
 
 	return tokenString, userResponse, nil
@@ -136,16 +144,17 @@ func (s *userService) GetMe(userID int64) (*dto.UserResponse, error) {
 	}
 
 	userResponse := &dto.UserResponse{
-		ID:         user.ID,
-		Username:   user.Username,
-		Email:      user.Email,
-		Nickname:   user.Nickname,
-		AvatarURL:  user.AvatarURL,
-		GradeLevel: user.GradeLevel,
-		BirthDate:  user.BirthDate,
-		Gender:     user.Gender,
-		Role:       user.Role,
-		CreatedAt:  user.CreatedAt,
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Nickname:    user.Nickname,
+		AvatarURL:   user.AvatarURL,
+		GradeLevel:  user.GradeLevel,
+		BirthDate:   user.BirthDate,
+		Gender:      user.Gender,
+		Role:        user.Role,
+		CreatedAt:   user.CreatedAt,
+		LastLoginAt: user.LastLoginAt, 
 	}
 
 	return userResponse, nil
@@ -183,16 +192,17 @@ func (s *userService) UpdateMe(userID int64, req *dto.UpdateUserRequest) (*dto.U
 
 	// 4. 返回更新后的用户信息
 	updatedUserResponse := &dto.UserResponse{
-		ID:         user.ID,
-		Username:   user.Username,
-		Email:      user.Email,
-		Nickname:   user.Nickname,
-		AvatarURL:  user.AvatarURL,
-		GradeLevel: user.GradeLevel,
-		BirthDate:  user.BirthDate,
-		Gender:     user.Gender,
-		Role:       user.Role,
-		CreatedAt:  user.CreatedAt,
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Nickname:    user.Nickname,
+		AvatarURL:   user.AvatarURL,
+		GradeLevel:  user.GradeLevel,
+		BirthDate:   user.BirthDate,
+		Gender:      user.Gender,
+		Role:        user.Role,
+		CreatedAt:   user.CreatedAt,
+		LastLoginAt: user.LastLoginAt, 
 	}
 
 	return updatedUserResponse, nil

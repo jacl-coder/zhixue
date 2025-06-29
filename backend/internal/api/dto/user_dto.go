@@ -37,16 +37,17 @@ type UpdateUserRequest struct {
 
 // UserResponse 是用于API返回的安全用户数据结构
 type UserResponse struct {
-	ID         int64      `json:"id"`
-	Username   string     `json:"username"`
-	Email      string     `json:"email"`
-	Nickname   string     `json:"nickname"`
-	AvatarURL  string     `json:"avatar_url"`
-	GradeLevel int        `json:"grade_level"`
-	BirthDate  *time.Time `json:"birth_date"`
-	Gender     string     `json:"gender"`
-	Role       string     `json:"role"`
-	CreatedAt  time.Time  `json:"created_at"`
+	ID          int64      `json:"id"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	Nickname    string     `json:"nickname"`
+	AvatarURL   string     `json:"avatar_url"`
+	GradeLevel  int        `json:"grade_level"`
+	BirthDate   *time.Time `json:"birth_date"`
+	Gender      string     `json:"gender"`
+	Role        string     `json:"role"`
+	CreatedAt   time.Time  `json:"created_at"`
+	LastLoginAt *time.Time `json:"last_login_at"`
 }
 
 // RegisterResponse 是用于注册成功后返回的数据结构

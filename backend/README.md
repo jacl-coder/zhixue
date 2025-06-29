@@ -16,10 +16,10 @@
 ├── internal/              # 私有应用代码
 │   ├── gateway/           # API网关核心逻辑 (路由、代理、中间件)
 │   ├── api/               # HTTP业务API层
+│   │   ├── dto/           # 数据传输对象
 │   │   ├── handlers/      # HTTP处理器
-│   │   ├── routes/        # 路由定义
 │   │   ├── middleware/    # 中间件
-│   │   └── proto/         # gRPC Protobuf定义
+│   │   ├── response/      # 响应格式化
 │   ├── service/           # 业务逻辑层
 │   │   ├── user/          # 用户服务
 │   │   ├── question/      # 题库服务
